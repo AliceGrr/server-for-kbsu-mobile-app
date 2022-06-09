@@ -1,1 +1,2 @@
-web: python server_runner.py runserver -p $PORT
+web: gunicorn server_runner:app
+init: python create_db_table_data.py -d app/translations
