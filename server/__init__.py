@@ -68,10 +68,10 @@ if create_db:
     db.session.commit()
 
     db.session.add_all([
-        Students(id=1802784, first_name='Галяева', last_name='Олеся', patronymic='Владимировна', group_code=1),
-        Students(id=2000548, first_name='Иван', last_name='Васильевич', patronymic='Пупкин', group_code=2),
-        Students(id=1800218, first_name='Лугуев', last_name='Мурад', patronymic='Магдиевич', group_code=1),
-        Students(id=2102158, first_name='Alex', last_name='Bobalo', patronymic='', group_code=3),
+        Students(id=1802784, first_name='Олеся', last_name='Галяева', patronymic='Владимировна', group_code=1),
+        Students(id=2000548, first_name='Иван', last_name='Пупкин', patronymic='Васильевич', group_code=2),
+        Students(id=1800218, first_name='Мурад', last_name='Лугуев', patronymic='Магдиевич', group_code=1),
+        Students(id=2102158, first_name='Bobalo', last_name='Alex', patronymic='', group_code=3),
     ])
     db.session.commit()
 
