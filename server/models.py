@@ -42,21 +42,13 @@ class Schedules(db.Model):
                             'eng': day.disciple.name_eng,
                     },
                     'teacher': {
-                        'ru': {
-                            'first_name': day.teacher.first_name_ru,
-                            'last_name': day.teacher.last_name_ru,
-                            'patronymic': day.teacher.patronymic_ru,
-
-                        },
-                        'eng': {
-                            'first_name': day.teacher.first_name_eng,
-                            'last_name': day.teacher.last_name_eng,
-                            'patronymic': day.teacher.patronymic_eng,
-                        }
+                        'ru': day.teacher.name_ru,
+                        'eng': day.teacher.name_eng,
                     },
                     'startTime': day.lecture_number.start_time,
                     'endTime': day.lecture_number.end_time,
                     'classroom': day.auditorium_number_id,
+                    'floor': day.auditorium.floor,
                     'institute': {
                         'ru': day.auditorium.institute.name_ru,
                         'eng': day.auditorium.institute.name_eng,
@@ -81,20 +73,40 @@ class Schedules(db.Model):
                f'{self.disciple} {self.teacher}'
 
 
+class MarksJSON:
+    def __init__(self, disciple, disciple_type, teacher,
+                 first_study_point_score=None, second_study_point_score=None, third_study_point_score=None,
+                 mark=None):
+        self.disciple = {'ru': disciple.name_ru, 'eng': disciple.name_eng}
+        self.disciple_type = {'ru': disciple_type.type_ru, 'eng': disciple_type.type_eng}
+        self.teacher = {'ru': teacher.name_ru, 'eng': teacher.name_eng}
+
+        if mark:
+            self.mark = {'ru': mark.type_ru, 'eng': mark.type_eng}
+        if first_study_point_score is None:
+            self.first_study_point_score = first_study_point_score
+        if second_study_point_score is None:
+            self.second_study_point_score = second_study_point_score
+        if third_study_point_score is None:
+            self.third_study_point_score = third_study_point_score
+
+
 class Marks(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
     disciple_id = db.Column(db.Integer, db.ForeignKey('disciplines.id'), nullable=False)
-    mark_id = db.Column(db.Integer, db.ForeignKey('mark_types.id'), nullable=False)
+    disciple_type_id = db.Column(db.Integer, db.ForeignKey('disciple_types.id'), nullable=False)
+    mark_id = db.Column(db.Integer, db.ForeignKey('mark_types.id'), nullable=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False)
     first_study_point_score = db.Column(db.Integer, nullable=True)
     second_study_point_score = db.Column(db.Integer, nullable=True)
     third_study_point_score = db.Column(db.Integer, nullable=True)
     study_period = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, student_id, group_id, mark_id, first_study_point_score,
-                 second_study_point_score, third_study_point_score, disciple_id, teacher_id, study_period):
+    def __init__(self, student_id, group_id, disciple_id, disciple_type,
+                 teacher_id, study_period, first_study_point_score=None,
+                 second_study_point_score=None, third_study_point_score=None, mark_id=None):
         self.student_id = student_id
         self.group_id = group_id
         self.mark_id = mark_id
@@ -102,6 +114,7 @@ class Marks(db.Model):
         self.second_study_point_score = second_study_point_score
         self.third_study_point_score = third_study_point_score
         self.disciple_id = disciple_id
+        self.disciple_type_id = disciple_type
         self.teacher_id = teacher_id
         self.study_period = study_period
 
@@ -110,40 +123,42 @@ class Marks(db.Model):
         query = Marks.query \
             .filter(Marks.study_period == study_period_id) \
             .filter(Marks.student_id == student_id)
-        schedule = {
+        marks = {
             'study_period': study_period_id,
             'marks':
             [
-                {
-                    'first_study_point_score': disciple.first_study_point_score,
-                    'second_study_point_score': disciple.second_study_point_score,
-                    'third_study_point_score': disciple.third_study_point_score,
-                    'mark': {
-                        'ru': MarkTypes.get_by_id(disciple.mark_id).type_ru,
-                        'eng': MarkTypes.get_by_id(disciple.mark_id).type_eng,
-                    },
-                    'disciple': {
-                            'ru': Disciplines.get_by_id(disciple.disciple_id).name_ru,
-                            'eng': Disciplines.get_by_id(disciple.disciple_id).name_eng,
-                    },
-                    'teacher': {
-                        'ru': {
-                            'first_name': Teachers.get_by_id(disciple.teacher_id).first_name_ru,
-                            'last_name': Teachers.get_by_id(disciple.teacher_id).last_name_ru,
-                            'patronymic': Teachers.get_by_id(disciple.teacher_id).patronymic_ru,
-
-                        },
-                        'eng': {
-                            'first_name': Teachers.get_by_id(disciple.teacher_id).first_name_eng,
-                            'last_name': Teachers.get_by_id(disciple.teacher_id).last_name_eng,
-                            'patronymic': Teachers.get_by_id(disciple.teacher_id).patronymic_eng,
-                        }
-                    },
-                }
+                MarksJSON(disciple=Disciplines.get_by_id(disciple.disciple_id),
+                          disciple_type=DiscipleTypes.get_by_id(disciple.disciple_type_id),
+                          teacher=Teachers.get_by_id(disciple.teacher_id),
+                          first_study_point_score=disciple.first_study_point_score,
+                          second_study_point_score=disciple.second_study_point_score,
+                          third_study_point_score=disciple.third_study_point_score,
+                          mark=MarkTypes.get_by_id(disciple.mark_id)).__dict__
+                # {
+                #     'first_study_point_score': disciple.first_study_point_score,
+                #     'second_study_point_score': disciple.second_study_point_score,
+                #     'third_study_point_score': disciple.third_study_point_score,
+                #     'mark': {
+                #         'ru': MarkTypes.get_by_id(disciple.mark_id).type_ru,
+                #         'eng': MarkTypes.get_by_id(disciple.mark_id).type_eng,
+                #     },
+                #     'disciple': {
+                #             'ru': Disciplines.get_by_id(disciple.disciple_id).name_ru,
+                #             'eng': Disciplines.get_by_id(disciple.disciple_id).name_eng,
+                #     },
+                #     'disciple_type': {
+                #             'ru': DiscipleTypes.get_by_id(disciple.disciple_type_id).name_ru,
+                #             'eng': DiscipleTypes.get_by_id(disciple.disciple_type_id).name_eng,
+                #     },
+                #     'teacher': {
+                #         'ru': Teachers.get_by_id(disciple.teacher_id).name_ru,
+                #         'eng': Teachers.get_by_id(disciple.teacher_id).name_eng,
+                #     },
+                # }
                 for disciple in query
             ]
         }
-        return schedule
+        return marks
 
     @staticmethod
     def get_for_all_periods(student_id):
@@ -204,6 +219,10 @@ class DiscipleTypes(db.Model):
         self.type_ru = type_ru
         self.type_eng = type_eng
 
+    @staticmethod
+    def get_by_id(id):
+        return DiscipleTypes.query.get(id)
+
 
 class UniversityResources(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -216,30 +235,56 @@ class UniversityResources(db.Model):
         self.url = url
         self.university_id = university_id
 
+    @staticmethod
+    def get_university_resources(student_id):
+        student = Students.get_by_id(student_id)
+        university_resources = student.group.specialization.faculty.institute.university.resources
+
+        resources = [{'type': resource.type, 'url': resource.url} for resource in university_resources]
+        return {'resources': resources}
+
 
 class Universities(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    address = db.Column(db.String(50), nullable=False)
-    longitude = db.Column(db.String(50), nullable=False)
-    latitude = db.Column(db.String(50), nullable=False)
+    name_ru = db.Column(db.String(100), nullable=False, unique=True)
+    name_eng = db.Column(db.String(100), nullable=False, unique=True)
+    address = db.Column(db.String(150), nullable=False)
+    longitude = db.Column(db.Float(), nullable=False)
+    latitude = db.Column(db.Float(), nullable=False)
     addictive_info = db.Column(db.String(300), nullable=True)
     resources = db.relationship('UniversityResources', backref='university', cascade='all, delete, delete-orphan')
     institutes = db.relationship('Institutes', backref='university', cascade='all, delete, delete-orphan')
 
-    def __init__(self, name, address, longitude, latitude, addictive_info):
-        self.name = name
+    def __init__(self, name_ru, name_eng, address, longitude, latitude, addictive_info):
+        self.name_ru = name_ru
+        self.name_eng = name_eng
         self.address = address
         self.longitude = longitude
         self.latitude = latitude
         self.addictive_info = addictive_info
 
+    @staticmethod
+    def get_university_info(student_id):
+        student = Students.get_by_id(student_id)
+        university = student.group.specialization.faculty.institute.university
+        info = {'university_info': {
+            'name': {
+                'ru': university.name_ru,
+                'eng': university.name_eng,
+            },
+            'address': university.address,
+            'longitude': university.longitude,
+            'latitude': university.latitude,
+            'addictive_info': university.addictive_info,
+        }}
+        return info
+
 
 class Institutes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name_ru = db.Column(db.String(50), nullable=False, unique=True)
-    name_eng = db.Column(db.String(50), nullable=False, unique=True)
-    address = db.Column(db.String(50), nullable=False)
+    name_ru = db.Column(db.String(100), nullable=False, unique=True)
+    name_eng = db.Column(db.String(100), nullable=False, unique=True)
+    address = db.Column(db.String(150), nullable=False)
     longitude = db.Column(db.Float(), nullable=False)
     latitude = db.Column(db.Float(), nullable=False)
     auditoriums = db.relationship('Auditoriums', backref='institute', cascade='all, delete, delete-orphan')
@@ -260,8 +305,8 @@ class Institutes(db.Model):
 
 class Faculties(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name_ru = db.Column(db.String(50), nullable=False, unique=True)
-    name_eng = db.Column(db.String(50), nullable=False, unique=True)
+    name_ru = db.Column(db.String(100), nullable=False, unique=True)
+    name_eng = db.Column(db.String(100), nullable=False, unique=True)
     specializations = db.relationship('Specializations', backref='faculty', cascade='all, delete, delete-orphan')
     institute_id = db.Column(db.Integer, db.ForeignKey('institutes.id'), nullable=False)
 
@@ -273,8 +318,8 @@ class Faculties(db.Model):
 
 class Specializations(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name_ru = db.Column(db.String(50), nullable=False, unique=True)
-    name_eng = db.Column(db.String(50), nullable=False, unique=True)
+    name_ru = db.Column(db.String(100), nullable=False, unique=True)
+    name_eng = db.Column(db.String(100), nullable=False, unique=True)
     groups = db.relationship('Groups', backref='specialization', cascade='all, delete, delete-orphan')
     faculty_id = db.Column(db.Integer, db.ForeignKey('faculties.id'), nullable=False)
 
@@ -315,7 +360,8 @@ class Students(db.Model):
     patronymic = db.Column(db.String(50), nullable=False)
     group_code = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
 
-    def __init__(self, first_name, last_name, patronymic, group_code):
+    def __init__(self, id, first_name, last_name, patronymic, group_code):
+        self.id = id
         self.first_name = first_name
         self.last_name = last_name
         self.patronymic = patronymic
@@ -325,37 +371,38 @@ class Students(db.Model):
         return f'{self.first_name} {self.last_name} {self.patronymic}'
 
     @staticmethod
-    def get_by_id(user_id):
-        return Students.query.get(user_id)
+    def get_by_id(student_id):
+        return Students.query.get(student_id)
+
+    @staticmethod
+    def get_student_info(student_id):
+        student = Students.get_by_id(student_id)
+        info = {
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'patronymic': student.patronymic,
+            'group_code': student.group_code,
+            'specialization': {
+                'ru': student.group.specialization.name_ru,
+                'eng': student.group.specialization.name_eng,
+            }
+        }
+        return info
 
 
 class Teachers(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    first_name_ru = db.Column(db.String(50), nullable=False)
-    last_name_ru = db.Column(db.String(50), nullable=False)
-    patronymic_ru = db.Column(db.String(50), nullable=False)
-
-    first_name_eng = db.Column(db.String(50), nullable=False)
-    last_name_eng = db.Column(db.String(50), nullable=False)
-    patronymic_eng = db.Column(db.String(50), nullable=False)
+    name_ru = db.Column(db.String(100), nullable=False)
+    name_eng = db.Column(db.String(100), nullable=False)
 
     faculty_id = db.Column(db.Integer, db.ForeignKey('faculties.id'), nullable=False)
     schedule = db.relationship('Schedules', backref='teacher', cascade='all, delete, delete-orphan')
 
-    def __init__(self, first_name_ru, last_name_ru, patronymic_ru, first_name_eng, last_name_eng, patronymic_eng, faculty_id):
-        self.first_name_ru = first_name_ru
-        self.last_name_ru = last_name_ru
-        self.patronymic_ru = patronymic_ru
-
-        self.first_name_eng = first_name_eng
-        self.last_name_eng = last_name_eng
-        self.patronymic_eng = patronymic_eng
-
+    def __init__(self, name_ru, name_eng, faculty_id):
+        self.name_ru = name_ru
+        self.name_eng = name_eng
         self.faculty_id = faculty_id
-
-    def __repr__(self):
-        return f'{self.first_name} {self.last_name} {self.patronymic}'
 
     @staticmethod
     def get_by_id(id):

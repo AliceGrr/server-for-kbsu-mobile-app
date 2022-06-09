@@ -1,9 +1,10 @@
 import json
 
 from flask import request
+from werkzeug.exceptions import abort
 
 from . import app
-from .models import Students, Schedules
+from .models import Students, Schedules, Marks, Universities, UniversityResources
 
 
 class Answer:
@@ -18,42 +19,57 @@ class Answer:
 @app.route('/kbsu_app', methods=['POST'])
 def login():
     """Вход пользователя."""
-    user = Students.get_by_id(request.form['id'])
+    student = Students.get_by_id(request.form['id'])
 
-    if user and user.last_name == request.form['last_name']:
-        answer = Answer()
-        return answer.to_json()
+    if student and student.last_name == request.form['last_name']:
+        student_info = Students.get_student_info(student.id)
+        return student_info
     else:
-        answer = Answer('No such student')
-        return answer.to_json()
+        abort(404)
 
 
 @app.route('/kbsu_app/schedule', methods=['POST'])
 def get_schedule():
     """Получение расписания"""
-    user = Students.get_by_id(request.form['id'])
-    if user and user.last_name == request.form['last_name']:
-        schedule = Schedules.get_for_all_week(user.group_code)
-        answer = Answer(schedule=schedule)
-        return answer.to_json()
+    student = Students.get_by_id(request.form['id'])
+    if student and student.last_name == request.form['last_name']:
+        schedule = Schedules.get_for_all_week(student.group_code)
+        return schedule
     else:
-        answer = Answer("Can't find schedule for student")
-        return answer.to_json()
+        abort(404)
 
 
 @app.route('/kbsu_app/marks', methods=['POST'])
 def get_marks():
-    pass
+    """Получение оценок"""
+    student = Students.get_by_id(request.form['id'])
+    if student and student.last_name == request.form['last_name']:
+        marks = Marks.get_for_all_periods(student.id)
+        return marks
+    else:
+        abort(404)
 
 
 @app.route('/kbsu_app/university_resources', methods=['POST'])
 def get_university_resources():
-    pass
+    """Получение ресурсов университета"""
+    student = Students.get_by_id(request.form['id'])
+    if student and student.last_name == request.form['last_name']:
+        university_resources = UniversityResources.get_university_resources(student.id)
+        return university_resources
+    else:
+        abort(404)
 
 
 @app.route('/kbsu_app/university_info', methods=['POST'])
 def get_university_info():
-    pass
+    """Получение информации об университете"""
+    student = Students.get_by_id(request.form['id'])
+    if student and student.last_name == request.form['last_name']:
+        university_info = Universities.get_university_info(student.id)
+        return university_info
+    else:
+        abort(404)
 
 
 
