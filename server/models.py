@@ -87,11 +87,11 @@ class MarksJSON:
 
         if mark:
             self.mark = {'ru': mark.type_ru, 'eng': mark.type_eng}
-        if first_study_point_score is None:
+        if first_study_point_score is not None:
             self.first_study_point_score = first_study_point_score
-        if second_study_point_score is None:
+        if second_study_point_score is not None:
             self.second_study_point_score = second_study_point_score
-        if third_study_point_score is None:
+        if third_study_point_score is not None:
             self.third_study_point_score = third_study_point_score
 
 
