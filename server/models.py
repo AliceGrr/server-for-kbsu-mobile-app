@@ -52,8 +52,10 @@ class Schedules(db.Model):
                     'classroom': day.auditorium_number_id,
                     'floor': day.auditorium.floor,
                     'institute': {
-                        'ru': day.auditorium.institute.name_ru,
-                        'eng': day.auditorium.institute.name_eng,
+                        'name': {
+                            'ru': day.auditorium.institute.name_ru,
+                            'eng': day.auditorium.institute.name_eng,
+                        },
                         'address': day.auditorium.institute.address,
                         'longitude': day.auditorium.institute.longitude,
                         'latitude': day.auditorium.institute.latitude,
@@ -136,27 +138,6 @@ class Marks(db.Model):
                           second_study_point_score=disciple.second_study_point_score,
                           third_study_point_score=disciple.third_study_point_score,
                           mark=MarkTypes.get_by_id(disciple.mark_id)).__dict__
-                # {
-                #     'first_study_point_score': disciple.first_study_point_score,
-                #     'second_study_point_score': disciple.second_study_point_score,
-                #     'third_study_point_score': disciple.third_study_point_score,
-                #     'mark': {
-                #         'ru': MarkTypes.get_by_id(disciple.mark_id).type_ru,
-                #         'eng': MarkTypes.get_by_id(disciple.mark_id).type_eng,
-                #     },
-                #     'disciple': {
-                #             'ru': Disciplines.get_by_id(disciple.disciple_id).name_ru,
-                #             'eng': Disciplines.get_by_id(disciple.disciple_id).name_eng,
-                #     },
-                #     'disciple_type': {
-                #             'ru': DiscipleTypes.get_by_id(disciple.disciple_type_id).name_ru,
-                #             'eng': DiscipleTypes.get_by_id(disciple.disciple_type_id).name_eng,
-                #     },
-                #     'teacher': {
-                #         'ru': Teachers.get_by_id(disciple.teacher_id).name_ru,
-                #         'eng': Teachers.get_by_id(disciple.teacher_id).name_eng,
-                #     },
-                # }
                 for disciple in query
             ]
         }
