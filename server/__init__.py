@@ -1,3 +1,5 @@
+# server.__init__.py
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config

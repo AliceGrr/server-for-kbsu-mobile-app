@@ -1,3 +1,5 @@
+# create_db_table_data.py
+
 from server import db
 from server.models import Weekdays, LectureNumbers, DiscipleTypes, MarkTypes, Universities, UniversityResources, \
 Teachers, Students, Specializations, Faculties, Groups, Institutes, Disciplines, Auditoriums, Schedules, Marks
